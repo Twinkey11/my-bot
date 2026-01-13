@@ -1,27 +1,41 @@
 import asyncio
 import logging
+import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import ChatMemberUpdatedFilter, IS_MEMBER
+from aiohttp import web # مكتبة لعمل سيرفر وهمي
 
-# التوكن الخاص بك
+# --- بياناتك ---
 TOKEN = '8531530454:AAFaqt0jTm4I-QaQM4w_2MRYjy0veWOAfnM'
-
-# قائمة القنوات
 CHANNELS = [-1003692216206, -1003565914121, -1003562101151, -1003640402409, -1003512003568]
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 active_trackers = set()
 
+# --- السيرفر الوهمي لإرضاء موقع Koyeb ---
+async def handle(request):
+    return web.Response(text="Bot is alive!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    # Koyeb بيعطينا رقم Port تلقائي في المتغير البيئي PORT
+    port = int(os.environ.get("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌍 تم تشغيل السيرفر الوهمي على بورت {port}")
+
+# --- منطق البوت الأساسي ---
 @dp.chat_member(ChatMemberUpdatedFilter(member_status_changed=IS_MEMBER))
 async def on_user_join(event: types.ChatMemberUpdated):
     user_id = event.from_user.id
     if event.chat.id in CHANNELS and user_id not in active_trackers:
         active_trackers.add(user_id)
-        print(f"👤 بدأ عداد 6 ساعات لـ {event.from_user.full_name}")
-        
+        print(f"👤 رصد دخول: {event.from_user.full_name} - بدأ عداد 6 ساعات")
         await asyncio.sleep(21600) # 6 ساعات
-        
         for channel_id in CHANNELS:
             try:
                 await bot.ban_chat_member(chat_id=channel_id, user_id=user_id)
@@ -30,7 +44,9 @@ async def on_user_join(event: types.ChatMemberUpdated):
         active_trackers.remove(user_id)
 
 async def main():
-    print("🚀 البوت انطلق ويعمل 24 ساعة...")
+    # تشغيل السيرفر الوهمي في الخلفية
+    await start_web_server()
+    print("🚀 البوت يعمل الآن بنظام الـ Web Service...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
