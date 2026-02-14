@@ -34,8 +34,8 @@ async def on_user_join(event: types.ChatMemberUpdated):
     user_id = event.from_user.id
     if event.chat.id in CHANNELS and user_id not in active_trackers:
         active_trackers.add(user_id)
-        print(f"👤 رصد دخول: {event.from_user.full_name} - بدأ عداد 6 ساعات")
-        await asyncio.sleep(21600) # 6 ساعات
+        print(f"👤 رصد دخول: {event.from_user.full_name} - بدأ عداد 3 ساعات")
+        await asyncio.sleep(10800) # 3 ساعات
         for channel_id in CHANNELS:
             try:
                 await bot.ban_chat_member(chat_id=channel_id, user_id=user_id)
